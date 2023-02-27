@@ -23,17 +23,53 @@ struct list_head *q_new()
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *l) {}
+void q_free(struct list_head *l)
+{
+    if (!l)
+        return;
+    element_t *node, *safe;
+    list_for_each_entry_safe (node, safe, l, list) {
+        free(node->value);
+        free(node);
+    }
+    free(l);
+}
 
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    element_t *node = malloc(sizeof(element_t));
+    if (!node) {
+        return false;
+    }
+    /* Allocate space for value in element_te */
+    int s_len = strlen(s) + 1;
+    node->value = malloc(s_len * sizeof(char));
+    if (!node->value) {
+        free(node);
+        return false;
+    }
+    memcpy(node->value, s, s_len);
+    list_add(&node->list, head);
     return true;
 }
 
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    element_t *node = malloc(sizeof(element_t));
+    if (!node) {
+        return false;
+    }
+    /* Allocate space for value in element_te */
+    int s_len = strlen(s) + 1;
+    node->value = malloc(s_len * sizeof(char));
+    if (!node->value) {
+        free(node);
+        return false;
+    }
+    memcpy(node->value, s, s_len);
+    list_add_tail(&node->list, head);
     return true;
 }
 
