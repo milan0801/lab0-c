@@ -161,8 +161,71 @@ void q_reverseK(struct list_head *head, int k)
     // https://leetcode.com/problems/reverse-nodes-in-k-group/
 }
 
+struct list_head *mergeTwoLists(struct list_head *list1,
+                                struct list_head *list2)
+{
+    struct list_head *head = NULL, **ptr = &head, **node;
+
+    for (node = NULL; list1 && list2; *node = (*node)->next) {
+        char *s1 = list_entry(list1, element_t, list)->value;
+        char *s2 = list_entry(list2, element_t, list)->value;
+        node = (strcmp(s1, s2) < 0) ? &list1 : &list2;
+        *ptr = *node;
+        ptr = &(*ptr)->next;
+    }
+
+    *ptr = (struct list_head *) ((uintptr_t) list1 | (uintptr_t) list2);
+    return head;
+}
+
 /* Sort elements of queue in ascending order */
-void q_sort(struct list_head *head) {}
+/* Use merge sort (non-recursive version) */
+void q_sort(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+
+    int top = 0;
+    int listsSize = 0;
+    struct list_head *stack[1000] = {NULL};
+    struct list_head *lists[100000] = {NULL};
+    stack[top] = head->next;
+    head->prev->next = NULL;
+
+    while (top >= 0) {
+        struct list_head *left = stack[top--];
+
+        if (left) {
+            struct list_head *slow = left;
+            struct list_head *fast;
+
+            for (fast = left->next; fast && fast->next;
+                 fast = fast->next->next) {
+                slow = slow->next;
+            }
+            struct list_head *right = slow->next;
+            slow->next = NULL;
+
+            stack[++top] = left;
+            stack[++top] = right;
+        } else {
+            lists[listsSize++] = stack[top--];
+        }
+    }
+
+    while (listsSize > 1) {
+        for (int i = 0, j = listsSize - 1; i < j; i++, j--)
+            lists[i] = mergeTwoLists(lists[i], lists[j]);
+        listsSize = (listsSize + 1) / 2;
+    }
+    head->next = lists[0];
+    struct list_head *ptr = head;
+    for (; ptr->next; ptr = ptr->next) {
+        ptr->next->prev = ptr;
+    }
+    ptr->next = head;
+    head->prev = ptr;
+}
 
 /* Remove every node which has a node with a strictly greater value anywhere to
  * the right side of it */
