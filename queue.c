@@ -1,15 +1,14 @@
+#include "queue.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "queue.h"
 
 /* Notice: sometimes, Cppcheck would find the potential NULL pointer bugs,
  * but some of them cannot occur. You can suppress them by adding the
  * following line.
  *   cppcheck-suppress nullPointer
  */
-
 
 /* Create an empty queue */
 struct list_head *q_new()
@@ -211,7 +210,6 @@ void q_reverse(struct list_head *head)
 {
     if (!head || list_empty(head))
         return;
-    element_t *item = NULL;
 
     struct list_head *cur, *safe;
     list_for_each_safe (cur, safe, head) {
@@ -243,12 +241,13 @@ void q_reverseK(struct list_head *head, int k)
     }
 }
 
-struct list_head *mergeTwoLists(struct list_head *list1,
-                                struct list_head *list2)
+static struct list_head *mergeTwoLists(struct list_head *list1,
+                                       struct list_head *list2)
 {
-    struct list_head *head = NULL, **ptr = &head, **node;
+    struct list_head *head = NULL, **ptr = &head;
 
-    for (node = NULL; list1 && list2; *node = (*node)->next) {
+    for (struct list_head **node = NULL; list1 && list2;
+         *node = (*node)->next) {
         char *s1 = list_entry(list1, element_t, list)->value;
         char *s2 = list_entry(list2, element_t, list)->value;
         node = (strcmp(s1, s2) < 0) ? &list1 : &list2;
@@ -262,51 +261,86 @@ struct list_head *mergeTwoLists(struct list_head *list1,
 
 /* Sort elements of queue in ascending order */
 /* Use merge sort (non-recursive version) */
+// void q_sort(struct list_head *head)
+// {
+//     if (!head || list_empty(head) || list_is_singular(head))
+//         return;
+//     int top = 0;
+//     int listsSize = 0;
+//     /* The tested queue size is 2,000,000.
+//      * If lists size is changed to 2,000,000, it would be crashed.
+//      */
+//     struct list_head *stack[1000] = {NULL};
+//     struct list_head *lists[100000] = {NULL};
+//     stack[top] = head->next;
+//     head->prev->next = NULL;
+
+//     while (top >= 0) {
+//         struct list_head *left = stack[top--];
+
+//         if (left) {
+//             struct list_head *slow = left;
+//             struct list_head *fast;
+
+//             for (fast = left->next; fast && fast->next;
+//                  fast = fast->next->next) {
+//                 slow = slow->next;
+//             }
+//             struct list_head *right = slow->next;
+//             slow->next = NULL;
+
+//             stack[++top] = left;
+//             stack[++top] = right;
+//         } else {
+//             lists[listsSize++] = stack[top--];
+//         }
+//     }
+
+//     while (listsSize > 1) {
+//         for (int i = 0, j = listsSize - 1; i < j; i++, j--)
+//             lists[i] = mergeTwoLists(lists[i], lists[j]);
+//         listsSize = (listsSize + 1) / 2;
+//     }
+//     head->next = lists[0];
+//     struct list_head *ptr = head;
+//     for (; ptr->next; ptr = ptr->next) {
+//         ptr->next->prev = ptr;
+//     }
+//     ptr->next = head;
+//     head->prev = ptr;
+// }
+
+struct list_head *merge_sort(struct list_head *head)
+{
+    if (!head || !head->next)
+        return head;
+
+    struct list_head *slow = head;
+    struct list_head *fast;
+
+    for (fast = head->next; fast && fast->next; fast = fast->next->next) {
+        slow = slow->next;
+    }
+    fast = slow->next;
+    slow->next = NULL;
+
+    return mergeTwoLists(merge_sort(head), merge_sort(fast));
+}
+
+/* Recursive method */
 void q_sort(struct list_head *head)
 {
     if (!head || list_empty(head) || list_is_singular(head))
         return;
 
-    int top = 0;
-    int listsSize = 0;
-    struct list_head *stack[1000] = {NULL};
-    struct list_head *lists[100000] = {NULL};
-    stack[top] = head->next;
     head->prev->next = NULL;
-
-    while (top >= 0) {
-        struct list_head *left = stack[top--];
-
-        if (left) {
-            struct list_head *slow = left;
-            struct list_head *fast;
-
-            for (fast = left->next; fast && fast->next;
-                 fast = fast->next->next) {
-                slow = slow->next;
-            }
-            struct list_head *right = slow->next;
-            slow->next = NULL;
-
-            stack[++top] = left;
-            stack[++top] = right;
-        } else {
-            lists[listsSize++] = stack[top--];
-        }
+    head->next = merge_sort(head->next);
+    struct list_head *cur = head;
+    for (; cur->next; cur = cur->next) {
+        cur->next->prev = cur;
     }
-
-    while (listsSize > 1) {
-        for (int i = 0, j = listsSize - 1; i < j; i++, j--)
-            lists[i] = mergeTwoLists(lists[i], lists[j]);
-        listsSize = (listsSize + 1) / 2;
-    }
-    head->next = lists[0];
-    struct list_head *ptr = head;
-    for (; ptr->next; ptr = ptr->next) {
-        ptr->next->prev = ptr;
-    }
-    ptr->next = head;
-    head->prev = ptr;
+    cur->next = head;
+    head->prev = cur;
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
