@@ -82,13 +82,18 @@ bool q_insert_tail(struct list_head *head, char *s)
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (!head || list_empty(head))
+        return NULL;
+
     element_t *del_node = list_first_entry(head, element_t, list);
-    size_t val_len = strlen(del_node->value);
-    if (val_len > bufsize - 1) {
-        val_len = bufsize - 1;
+    if (sp && bufsize != 0) {
+        size_t val_len = strlen(del_node->value);
+        if (val_len > bufsize - 1) {
+            val_len = bufsize - 1;
+        }
+        memcpy(sp, del_node->value, val_len);
+        sp[val_len] = '\0';
     }
-    memcpy(sp, del_node->value, val_len);
-    sp[val_len] = '\0';
     list_del(&del_node->list);
 
     return del_node;
@@ -97,13 +102,18 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (!head || list_empty(head))
+        return NULL;
+
     element_t *del_node = list_last_entry(head, element_t, list);
-    size_t val_len = strlen(del_node->value);
-    if (val_len > bufsize - 1) {
-        val_len = bufsize - 1;
+    if (sp && bufsize != 0) {
+        size_t val_len = strlen(del_node->value);
+        if (val_len > bufsize - 1) {
+            val_len = bufsize - 1;
+        }
+        memcpy(sp, del_node->value, val_len);
+        sp[val_len] = '\0';
     }
-    memcpy(sp, del_node->value, val_len);
-    sp[val_len] = '\0';
     list_del(&del_node->list);
 
     return del_node;
